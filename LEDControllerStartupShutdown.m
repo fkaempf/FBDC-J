@@ -5,6 +5,12 @@ if isempty(which('flyBowl_LED_control')) && exist('../flyBowl','dir'),
   addpath('../flyBowl');
 end
 
+% FBDC-J: make the selectable-firmware Teensy classes available
+tdir = fullfile(fileparts(mfilename('fullpath')),'TeensyLEDControl');
+if exist(tdir,'dir') && isempty(which('TeensyLEDController')),
+  addpath(tdir);
+end
+
 if ~ismember(mode,{'startup','shutdown'}),
   error('mode should be either startup or shutdown');
 end
@@ -30,7 +36,7 @@ if nargin < 2,
 end
   
 params = ReadParams(paramsfile,...
-  'fns_list',{'ChR_serial_port_for_LED_Controller'},...
+  'fns_list',{'ChR_serial_port_for_LED_Controller','ChR_LED_firmware'},...
   'fns_numeric',{'ChR_IrInt'});
 
 [~,ComputerName] = system('hostname');
@@ -45,9 +51,23 @@ params.ChR_serial_port_for_LED_Controller = m{i,2};
 
 global FBDC_CHR_LED_CONTROLLER_FID;
 
-hLEDController = serial(params.ChR_serial_port_for_LED_Controller,...
-  'BaudRate', 115200, 'Terminator', 'CR');
-fopen(hLEDController);
+% FBDC-J: if a firmware is named (ChR_LED_firmware = flybowl2015 | rgb_cmdarduino),
+% drive the board through the selectable TeensyLEDController; otherwise keep the
+% original raw-serial controller.
+ledfirmware = '';
+if isfield(params,'ChR_LED_firmware'),
+  v = params.ChR_LED_firmware; if iscell(v), v = v{1}; end
+  ledfirmware = strtrim(char(v));
+end
+if ~isempty(ledfirmware),
+  hLEDController = TeensyLEDController(ledfirmware, ...
+    params.ChR_serial_port_for_LED_Controller, 115200);
+  hLEDController.connect();
+else
+  hLEDController = serial(params.ChR_serial_port_for_LED_Controller,...
+    'BaudRate', 115200, 'Terminator', 'CR');
+  fopen(hLEDController);
+end
 
 if isempty(FBDC_CHR_LED_CONTROLLER_FID)
   FBDC_CHR_LED_CONTROLLER_FID = hLEDController;
@@ -68,5 +88,9 @@ end
 
 flyBowl_LED_control(hLEDController, 'STOP',[],false);
 flyBowl_LED_control(hLEDController, 'OFF',[],false);
-fclose(hLEDController);
+if isa(hLEDController,'TeensyLEDController'),
+  hLEDController.disconnect();
+else
+  fclose(hLEDController);
+end
 FBDC_CHR_LED_CONTROLLER_FID = setdiff(FBDC_CHR_LED_CONTROLLER_FID,hLEDController);

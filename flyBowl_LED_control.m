@@ -5,6 +5,33 @@ if nargin < 4,
   docheckstatus = true;
 end
 
+% FBDC-J: if handed a selectable-firmware TeensyLEDController, route the
+% command through it so the same bias-branch code drives a board flashed
+% with either the old ('flybowl2015') or new ('rgb_cmdarduino') firmware.
+% The raw-serial path below is kept unchanged for the original controller.
+if isa(s1,'TeensyLEDController')
+  status = {};
+  switch upper(strtrim(token))
+    case 'CONNECT',            s1.connect();
+    case 'IR',                 s1.setIR(round(param));
+    case {'CHR','OPTO'},       s1.setOpto(round(param));
+    case 'PULSE'
+      pat = struct('intensity',1, ...
+        'pulse_width_ms',param.pulse_width, ...
+        'pulse_period_ms',param.pulse_period, ...
+        'num_pulses',param.number_of_pulses, ...
+        'inter_iteration_pause_ms',param.pulse_train_interval, ...
+        'num_iterations',param.iteration);
+      s1.pulse('opto',pat);
+    case {'OFF','ALLOFF','RESET'}, s1.allOff();
+    case 'STOP',               s1.stop();
+    case {'ON','ALLON'}        % quadrant enable handled inside setOpto per firmware
+    case 'DISCONNECT',         s1.disconnect();
+    otherwise                  % LOG/LIN/PATT/RUN not needed via the controller
+  end
+  return;
+end
+
 switch upper(strtrim(token))
     case 'CONNECT'
         s1 = serial(COMPort, 'BaudRate', 115200, 'Terminator', 'CR');
