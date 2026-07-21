@@ -59,12 +59,15 @@ if isfield(params,'ChR_LED_firmware'),
   v = params.ChR_LED_firmware; if iscell(v), v = v{1}; end
   ledfirmware = strtrim(char(v));
 end
-if ~isempty(ledfirmware),
+if strcmpi(ledfirmware,'rgb_cmdarduino'),
+  % FlyDisco board -> selectable TeensyLEDController (rgb_cmdarduino dialect)
   hLEDController = TeensyLEDController(ledfirmware, ...
     params.ChR_serial_port_for_LED_Controller, 115200);
   hLEDController.connect();
 else
-  hLEDController = serial(params.ChR_serial_port_for_LED_Controller,...
+  % Incubator board (flybowl2015) or unset -> original raw-serial protocol
+  % over the serialport shim (R2026a removed the legacy `serial` object).
+  hLEDController = LegacySerialShim(params.ChR_serial_port_for_LED_Controller,...
     'BaudRate', 115200, 'Terminator', 'CR');
   fopen(hLEDController);
 end

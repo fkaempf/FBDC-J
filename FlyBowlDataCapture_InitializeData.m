@@ -79,8 +79,11 @@ handles.secondformat = 13;
 handles.minhour = rem(datenum('06:00'),1);
 handles.maxhour = rem(datenum('23:00'),1);
 
-handles.SAGECodeDir = '../SAGE/MATLABInterface/Trunk';
-handles.JCtraxCodeDir = '../JAABA';
+% FBDC-J: resolve dependency dirs relative to THIS file, not the current
+% working directory, so JAABA/SAGE are found no matter where MATLAB is cd'd.
+fbdc_thisdir = fileparts(mfilename('fullpath'));
+handles.SAGECodeDir = fullfile(fbdc_thisdir,'..','SAGE','MATLABInterface','Trunk');
+handles.JCtraxCodeDir = fullfile(fbdc_thisdir,'..','JAABA');
 
 % max number of times to try to grab temperature and fail
 handles.MaxNTempGrabAttempts = 30;

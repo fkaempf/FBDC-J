@@ -1,0 +1,86 @@
+# FBDC-J params for this workstation (jefferis-pc-15): records via BIAS,
+# LED driven through the selectable TeensyLEDController (flybowl2015 on COM4).
+
+# Directories (this machine has no D: data drive)
+OutputDirectory,C:\Users\jefferis-lab\Videos\FBDC_data,C:\Users\jefferis-lab\Videos\FBDC_data
+TmpOutputDirectory,C:\Users\jefferis-lab\Videos\FBDC_tmp,C:\Users\jefferis-lab\Videos\FBDC_tmp
+HardDriveName,(jefferis-pc-15:Internal_C),(jefferis-pc-15:Internal_C)
+
+# Camera adaptor: bias (records through BIAS, not the imaq toolbox)
+Imaq_Adaptor,bias
+FileType,avi
+
+MovieFilePrefix,movie
+MetaDataFileName,Metadata.xml
+LogFileName,Log.txt
+UFMFLogFileName,ufmf_log.txt
+UFMFStatFileName,ufmf_diagnostics.txt
+QuickStatsStatsFileName,QuickStats_Stats_20110914T022555.mat
+
+# Metadata option lists
+Assay_Experimenters,fkaempf,kampff
+Rearing_IncubatorIDs,1,2
+Assay_Room,jefferis-lab
+Assay_Rigs,1
+Assay_Plates,10
+Assay_VisualSurrounds,1
+Assay_Lids,01
+Assay_Bowls,A,B,C,D
+MetaData_AssayName,FlyBowl
+
+# Frame rate (Grasshopper3 at 90 fps)
+Imaq_FrameRate,90
+Imaq_MaxFrameRate,91
+FrameRatePlotYLim,0,160
+TempPlotYLim,20,35
+
+# Temperature probe: OFF (no probe on this machine)
+TempProbePeriod,5
+TempProbeChannels,1
+TempProbeTypes,T
+TempProbeReject60Hz,0
+DoRecordTemp,0
+NPreconSamples,0
+PreconSensorSerialPort,COM1
+
+ScanLineYLim,60,250
+MinFliesLoadedTime,5
+MaxFliesLoadedTime,300
+# temp probe is off, so do not couple camera start to it
+CoupleCameraTempProbeStart,0
+ConditionDirectory,C:\Users\jefferis-lab\Videos\FBDC_conditions
+RecordTime,20
+
+## BIAS-specific parameters
+# Launch the shimmed BIAS (Spinnaker-4.3) via run_bias.cmd
+BIASBinary,C:\Users\jefferis-lab\flydisco\tools\bias_jaaba_v0.75.0\v0.75.0\run_bias.cmd
+BIASProcessName,test_gui.exe
+# Camera-compatible config captured from this BIAS (AVI logging)
+BIASConfigFile,C:\Users\jefferis-lab\FBDC-J\param_flo\bias_config_flydisco.json
+# Port: BIASServerPortBegin + deviceid*Step -> device 1 = 5010 (our BIAS camera 0)
+BIASServerPortBegin,5000
+BIASServerPortStep,10
+BIASCameraNumbers,1
+BIASURLBase,http://127.0.0.1
+
+## Optogenetics LED controller (FBDC-J selectable Teensy)
+# hostname:COMport mapping (this machine)
+ChR_serial_port_for_LED_Controller,jefferis-pc-15:COM4
+# firmware dialect: flybowl2015 | rgb_cmdarduino
+ChR_LED_firmware,flybowl2015
+# IR backlight intensity at startup (percent)
+ChR_IrInt,50
+# --- optogenetics ON ---
+doChR,1
+# temperature/humidity update period during stimulus (s)
+ChR_THUpdateP,5
+# LED controller is a serial Teensy, not a NI DAQ card
+ChR_isDaqCard,0
+# 16-quadrant LED enable pattern (all quadrants on)
+ChR_LEDpattern,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+# rig name recorded in the metadata
+ChR_rigName,FlyDisco
+# LED stimulus timing protocol (CSV: step,intensity,pulseWidth,pulsePeriod,pulseNum,offTime,delayTime,duration)
+ChR_expProtocolFile,C:\Users\jefferis-lab\FBDC-J\led_protocol\led_protocol_flydisco.csv
+
+PreviewUpdatePeriod,1

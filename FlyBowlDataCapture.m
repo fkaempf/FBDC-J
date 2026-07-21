@@ -157,6 +157,11 @@ end
 % initialize data
 handles = FlyBowlDataCapture_InitializeData(handles);
 
+% FBDC-J: add the LED-board (Teensy firmware) selector dropdown.
+%   Incubator = flybowl2015 (the currently connected board)
+%   FlyDisco  = rgb_cmdarduino
+handles = FBDC_addLEDFirmwareDropdown(handles);
+
 % % Make sure that the MySQL JAR file for FlyBoyQuery can be found.
 % if isfield(handles.params,'DoSyncBarcode') && handles.params.DoSyncBarcode ~= 0,
 %   handles.FlyBoy_stm = InitializeFlyBoy();
@@ -174,9 +179,15 @@ set(handles.figure_main,'Visible','on');
 %   handles.isAutoComplete_edit_Fly_LineName = true;
 % end
 
-% get a reference to the underlying java component for the log
-handles.jhedit_Status = findjobj(handles.edit_Status);
-handles.jedit_Status = handles.jhedit_Status.getComponent(0).getComponent(0);
+% get a reference to the underlying java component for the log.
+% FBDC-J: Java Swing figure peers were removed in recent MATLAB (R2026a),
+% so findjobj can fail here. Keep it non-fatal so init still finishes --
+% addToStatus already guards on isfield(handles,'jedit_Status').
+try
+  handles.jhedit_Status = findjobj(handles.edit_Status);
+  handles.jedit_Status = handles.jhedit_Status.getComponent(0).getComponent(0);
+catch
+end
 
 if handles.IsBarcode,
   % barcode edit box
@@ -1674,12 +1685,15 @@ function pushbutton_InitializeCamera_Callback(hObject, eventdata, handles)
 
 if handles.params.doChR,
   [success,handles.ChRStuff,errmsg] = InitializeChRStimulus(handles.params);
-  handles.params.RecordTime = handles.ChRStuff.TotalDuration_Seconds;
   if ~success,
     s = errmsg;
     errordlg(s);
     error(s);
   end
+  % FBDC-J: only read TotalDuration_Seconds after confirming success --
+  % on an early return ChRStuff lacks that field, which used to crash here
+  % with "Unrecognized field name" and hide the real error message.
+  handles.params.RecordTime = handles.ChRStuff.TotalDuration_Seconds;
 end
 
 handles = setCamera(handles);
@@ -1764,6 +1778,14 @@ if isfield(handles,'GUIInstanceFileName') && ...
   end
 end
 guidata(hObject,handles);
+
+% FBDC-J: closing the FBDC GUI also closes BIAS (stop capture + disconnect,
+% then terminate the BIAS process) so it does not keep running / holding the
+% camera after FBDC is gone.
+try
+  CloseBIAS(handles);
+catch
+end
 
 if exist('hwaitbar','var') && ishandle(hwaitbar),
   delete(hwaitbar);

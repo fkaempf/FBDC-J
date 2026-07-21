@@ -1,0 +1,5 @@
+# Per-machine FBDC runtime state (remembers last params file) — not for the repo
+.FlyBowlDataCapture_rc.mat
+
+# Camera-detection semaphores / instance files written at runtime
+.DetectCamerasData/
